@@ -1,0 +1,1 @@
+# Scrape cards from Tutti.ch and search for profit margins

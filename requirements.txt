@@ -1,0 +1,13 @@
+requests
+inference
+numpy
+python-dotenv
+pillow
+protobuf
+easyocr
+opencv-python
+ultralytics
+httpx
+playwright
+sqlalchemy
+google-genai
