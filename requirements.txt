@@ -11,3 +11,4 @@ httpx
 playwright
 sqlalchemy
 google-genai
+playwright

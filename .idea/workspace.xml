@@ -4,19 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="Improved the precision of the model by changing it to &quot;sleeved-obb/7&quot;. Also made other minor improvements.">
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+    <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="Added free tier Gemini API option">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/database.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/notifications/reporter.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/notifications/reporter.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pricing/calculator.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/pricing/calculator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pricing/pricecharting.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/pricing/pricecharting.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/scraper/tutti.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/scraper/tutti.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vision/classifier.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vision/detector.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/vision/detector.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vision/gemini_classifier.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/vision/gemini_classifier.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -155,7 +146,23 @@
       <option name="project" value="LOCAL" />
       <updated>1773344969508</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Changed the template repo, such that we now search for video games instead of trading cards.">
+      <option name="closed" value="true" />
+      <created>1773577455435</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1773577455435</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Added free tier Gemini API option">
+      <option name="closed" value="true" />
+      <created>1773606413901</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1773606413901</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -175,6 +182,8 @@
     <MESSAGE value="added a classifier via gemini 3.1 flash lite. We successfully detect the cards in our pictures and add them to our database." />
     <MESSAGE value="Implemented a notifier for potential profits and a calculator for said profits" />
     <MESSAGE value="Improved the precision of the model by changing it to &quot;sleeved-obb/7&quot;. Also made other minor improvements." />
-    <option name="LAST_COMMIT_MESSAGE" value="Improved the precision of the model by changing it to &quot;sleeved-obb/7&quot;. Also made other minor improvements." />
+    <MESSAGE value="Changed the template repo, such that we now search for video games instead of trading cards." />
+    <MESSAGE value="Added free tier Gemini API option" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added free tier Gemini API option" />
   </component>
 </project>
