@@ -40,7 +40,7 @@ def main():
         if tier == "PAID":
             asyncio.run(analyze_game_parallel())
         else:
-            asyncio.run(analyze_card_free_tier())
+            asyncio.run(analyze_game_free_tier())
 
         print("\n>>> PHASE 3: PRICECHARTING MARKET ANALYSIS <<<")
 
