@@ -7,21 +7,18 @@ import random
 import requests
 from playwright.async_api import async_playwright
 from src.db.database import SessionLocal
-from src.db.models import Card
-
+from src.db.models import Listing, Game
 
 CONCURRENCY_LIMIT = 1
 
 
 def get_live_exchange_rate() -> float:
     """Fetches the live USD to CHF exchange rate from a free public API."""
-    print("Bot: Fetching live USD -> CHF exchange rate...")
     try:
         url = "https://open.er-api.com/v6/latest/USD"
         response = requests.get(url, timeout=10)
         data = response.json()
         rate = data["rates"]["CHF"]
-        print(f"Bot: Current exchange rate is 1 USD = {rate} CHF")
         return rate
     except Exception as e:
         # If the internet drops or the API is down, use a sensible fallback (approx. March 2026 rate)
@@ -41,24 +38,36 @@ def parse_usd_price(price_str: str) -> float:
         return 0.0
 
 
-def format_search_query(name: str, set_info: str) -> str:
-    """Transforms Gemini's output into a PriceCharting query."""
-    if not set_info or set_info == "Unknown":
+def format_search_query(name: str, platform: str) -> str:
+    """Transforms Gemini's output into a PriceCharting query for Video Games."""
+    if not platform or platform.lower() == "unknown":
         return name
-
-    numerator = set_info.split('/')[0].strip()
-    if numerator.isdigit():
-        numerator = str(int(numerator))
-
-    return f"{name} #{numerator}"
+    # Simply combine the Game Name and the Console (e.g., "Super Mario 64 Nintendo 64")
+    return f"{name} {platform}"
 
 
-async def fetch_card_price(browser, card_id: int, search_query: str, semaphore: asyncio.Semaphore,
+def get_price_selector(condition: str) -> str:
+    """Maps the game's condition to PriceCharting's specific HTML IDs."""
+    cond = condition.lower() if condition else "loose"
+
+    # Fixed to match the HTML ID: 'complete_price'
+    if cond == "cib" or cond == "complete":
+        return "#complete_price .js-price"
+    elif cond == "new" or cond == "sealed":
+        return "#new_price .js-price"
+    elif cond == "box only":
+        return "#box_only_price .js-price"
+    elif cond == "manual only":
+        return "#manual_only_price .js-price"
+    else:
+        # Default to loose cartridge/disc
+        return "#used_price .js-price"
+
+
+async def fetch_game_price(browser, game_id: int, search_query: str, condition: str, semaphore: asyncio.Semaphore,
                            exchange_rate: float):
-    """Worker function that searches a card with randomized human jitter to evade firewalls."""
+    """Worker function (Muted to allow for clean progress bar)."""
 
-    # Before we even acquire the semaphore, sleep for a random fraction of a second.
-    # This prevents the initial batch of tasks from hitting the site at the exact same millisecond.
     await asyncio.sleep(random.uniform(0.1, 2.5))
 
     async with semaphore:
@@ -66,73 +75,62 @@ async def fetch_card_price(browser, card_id: int, search_query: str, semaphore: 
 
         try:
             encoded_query = urllib.parse.quote(search_query)
-            search_url = f"https://www.pricecharting.com/de/search-products?q={encoded_query}&type=prices"
+            search_url = f"https://www.pricecharting.com/en/search-products?q={encoded_query}&type=prices"
 
             await page.goto(search_url)
             await page.wait_for_load_state("domcontentloaded")
 
             title = await page.title()
             if "Just a moment" in title or "Cloudflare" in title or "Attention Required" in title:
-                print(f"  -> [Card {card_id}] Cloudflare wall hit on search! Skipping to protect IP...")
-                return card_id, 0.0, None, None
+                return game_id, 0.0, None, None, "CLOUDFLARE"
 
             await asyncio.sleep(random.uniform(1.2, 3.5))
 
-            # We landed on a search results table
             if await page.locator("#games_table").first.is_visible():
                 first_row = page.locator("#games_table tbody tr").first
                 if await first_row.is_visible():
-                    # Grab the link to the actual product page and navigate there
                     href = await first_row.locator("td.title a").first.get_attribute("href")
                     if href:
-                        # Handle relative URLs
                         if href.startswith("/"):
                             href = "https://www.pricecharting.com" + href
 
                         await asyncio.sleep(random.uniform(0.3, 1.1))
-
                         await page.goto(href)
                         await page.wait_for_load_state("domcontentloaded")
-
                         await asyncio.sleep(random.uniform(1.5, 3.2))
 
-            # Now we should be on the actual product page
             price_val_usd = 0.0
             pc_url = None
             img_url = None
 
-            if await page.locator("#used_price").first.is_visible():
-                # Get Price
-                price_text = await page.locator("#used_price .js-price").first.inner_text()
-                price_val_usd = parse_usd_price(price_text)
+            price_selector = get_price_selector(condition)
 
-                # Get the Official URL
+            try:
+                await page.locator(price_selector).first.wait_for(state="visible", timeout=3000)
+
+                price_text = await page.locator(price_selector).first.inner_text()
+                price_val_usd = parse_usd_price(price_text)
                 pc_url = page.url
 
-                # Get the Image URL
                 img_locator = page.locator(".photo img, .cover img, #cover img").first
-                if await img_locator.is_visible():
-                    img_url = await img_locator.get_attribute("src")
+                if await img_locator.first.is_visible():
+                    img_url = await img_locator.first.get_attribute("src")
                     if img_url and img_url.startswith("//"):
                         img_url = "https:" + img_url
+            except Exception as e:
+                # If it times out, it means the specific condition price (e.g., CIB) doesn't exist for this game
+                pass
 
-            # Convert to CHF
             price_val_chf = round(price_val_usd * exchange_rate, 2)
+            status = "FOUND" if price_val_usd > 0 else "NOT_FOUND"
 
-            if price_val_usd > 0:
-                print(f"  -> [Card {card_id}] Found: {price_val_chf} CHF | URL Saved.")
-            else:
-                print(f"  -> [Card {card_id}] No results found. Defaulting to 0.0 CHF")
-
-            return card_id, price_val_chf, pc_url, img_url
+            return game_id, price_val_chf, pc_url, img_url, status
 
         except Exception as e:
-            print(f"  -> [Card {card_id}] Error fetching price: {str(e)[:50]}")
-            return card_id, 0.0, None, None
+            return game_id, 0.0, None, None, f"ERROR: {str(e)[:20]}"
 
         finally:
             await page.close()
-            # Wait a moment before returning the semaphore so the next tab doesn't open instantly
             await asyncio.sleep(random.uniform(0.5, 1.5))
 
 
@@ -141,50 +139,94 @@ async def run_parallel_pricer():
     db = SessionLocal()
 
     try:
-        cards_to_price = db.query(Card).filter(
-            Card.detected_name != None,
-            Card.detected_name != "Unknown",
-            Card.detected_name != "Error",
-            Card.detected_name != "Safety Blocked",
-            Card.estimated_price == None
+        games_to_price = db.query(Game).filter(
+            Game.detected_name != None,
+            Game.detected_name != "Unknown",
+            Game.detected_name != "Error",
+            Game.detected_name != "Safety Blocked",
+            Game.estimated_price == None
         ).all()
 
-        if not cards_to_price:
-            print("Bot: No valid identified cards need pricing.")
+        if not games_to_price:
+            print("Bot: No valid identified games need pricing.")
             return
 
-        print(f"Bot: Found {len(cards_to_price)} cards to price.\n")
+        total_games = len(games_to_price)
+        print(f"Bot: Found {total_games} games to price.\n")
 
-        # Fetch the exchange rate ONCE before starting the parallel workers
         usd_to_chf_rate = get_live_exchange_rate()
         print("Bot: Launching browser...")
 
         semaphore = asyncio.Semaphore(CONCURRENCY_LIMIT)
+        affected_listing_ids = set()
 
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
             tasks = []
 
-            for card in cards_to_price:
-                query = format_search_query(card.detected_name, card.set_info)
-                tasks.append(fetch_card_price(browser, card.id, query, semaphore, usd_to_chf_rate))
+            for game in games_to_price:
+                affected_listing_ids.add(game.listing_id)
+                query = format_search_query(game.detected_name, game.platform)
 
-            print(f"Bot: Dispatching {len(tasks)} searches to PriceCharting...")
+                # Passing the condition to the worker
+                tasks.append(fetch_game_price(browser, game.id, query, game.condition, semaphore, usd_to_chf_rate))
+
+            print(f"Bot: Dispatching {total_games} searches to PriceCharting...")
 
             priced_count = 0
-            for coro in asyncio.as_completed(tasks):
-                card_id, price_val_chf, pc_url, img_url = await coro
+            bar_length = 30
 
-                db_card = db.query(Card).filter(Card.id == card_id).first()
-                if db_card:
-                    db_card.estimated_price = price_val_chf
-                    db_card.pricecharting_url = pc_url
-                    db_card.pricecharting_image_url = img_url
+            for coro in asyncio.as_completed(tasks):
+                game_id, price_val_chf, pc_url, img_url, status = await coro
+
+                db_game = db.query(Game).filter(Game.id == game_id).first()
+                if db_game:
+                    db_game.estimated_price = price_val_chf
+                    db_game.pricecharting_url = pc_url
+                    db_game.pricecharting_image_url = img_url
                     db.commit()
                     priced_count += 1
-            print(f"Bot: Successfully evaluated and saved {priced_count} cards (values in CHF).")
 
+                percent = (priced_count / total_games) * 100
+                filled_length = int(bar_length * priced_count // total_games)
+                bar = '█' * filled_length + '-' * (bar_length - filled_length)
+
+                if status == "CLOUDFLARE":
+                    print(f"\n [Game {game_id}] Hit Cloudflare wall! Skipping.")
+
+                status_text = f"[{price_val_chf} CHF]" if status == "FOUND" else f"[{status}]"
+                print(
+                    f"\rBot: Pricing |{bar}| {percent:.1f}% ({priced_count}/{total_games}) -> Game {game_id} {status_text}\033[K",
+                    end="", flush=True)
+
+            print("\nBot: Game pricing complete! Closing browser...")
             await browser.close()
 
+        print("Bot: Evaluating Listing statuses...")
+        listings_marked = 0
+
+        for lid in affected_listing_ids:
+            listing = db.query(Listing).filter(Listing.id == lid).first()
+            if not listing:
+                continue
+
+            unpriced_valid_games = db.query(Game).filter(
+                Game.listing_id == lid,
+                Game.detected_name != None,
+                Game.detected_name != "Unknown",
+                Game.detected_name != "Error",
+                Game.detected_name != "Safety Blocked",
+                Game.estimated_price == None
+            ).count()
+
+            if unpriced_valid_games == 0:
+                listings_marked += 1
+
+        db.commit()
+        print(f"Bot: Marked {listings_marked} listings as 'PRICED'. Ready for arbitrage calculations!")
+
+    except Exception as e:
+        print(f"\nFatal Error in pricing engine: {e}")
+        db.rollback()
     finally:
         db.close()
