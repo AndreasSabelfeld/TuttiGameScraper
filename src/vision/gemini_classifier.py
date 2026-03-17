@@ -276,7 +276,7 @@ async def analyze_game_free_tier() -> None:
 
             except Exception as e:
                 print(f"  -> Error on Game {game.id}: {str(e)[:100]}")
-                if "429" in e:
+                if "429" in str(e):
                     print(f"  !! Rate limit hit. Backing off for 20s...")
                     await asyncio.sleep(20)
 
