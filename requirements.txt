@@ -12,3 +12,4 @@ playwright
 sqlalchemy
 google-genai
 playwright
+playwright-stealth
