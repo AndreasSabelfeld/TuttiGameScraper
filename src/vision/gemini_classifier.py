@@ -233,11 +233,21 @@ async def analyze_game_free_tier() -> None:
 
                 image_part = types.Part.from_bytes(data=image_data, mime_type="image/jpeg")
 
-                response = await client.aio.models.generate_content(
-                    model=MODEL_ID,
-                    contents=[PROMPT, image_part],
-                    config=types.GenerateContentConfig(response_mime_type="application/json")
-                )
+                try:
+                    # We give Gemini exactly 30 seconds to answer, otherwise we kill the request.
+                    response = await asyncio.wait_for(
+                        client.aio.models.generate_content(
+                            model=MODEL_ID,
+                            contents=[PROMPT, image_part],
+                            config=types.GenerateContentConfig(response_mime_type="application/json")
+                        ),
+                        timeout=10.0
+                    )
+                except asyncio.TimeoutError:
+                    print(f"  -> Timeout Error on Game {game.id}: Gemini took longer than 30s.")
+                    game.detected_name = "Error"  # Mark as error so it moves on
+                    db.commit()
+                    continue  # Skip to the next game
 
                 if response.text:
                     result_data = json.loads(response.text)
