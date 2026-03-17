@@ -276,13 +276,17 @@ async def analyze_game_free_tier() -> None:
 
             except Exception as e:
                 print(f"  -> Error on Game {game.id}: {str(e)[:100]}")
+                if "429" in e:
+                    print(f"  !! Rate limit hit. Backing off for 20s...")
+                    await asyncio.sleep(20)
+
                 game.detected_name = "Error"
                 db.commit()
 
             # 🚨 CRITICAL FREE TIER THROTTLE 🚨
-            # 60 seconds / 15 requests = 4 seconds. We use 4.2 to safely dodge micro-timing bans.
+            # 60 seconds / 15 requests = 4 seconds. We use 4.5 to safely dodge micro-timing bans.
             if i < len(games_to_identify) - 1:
-                await asyncio.sleep(4.2)
+                await asyncio.sleep(4.5)
 
         print(f"\nBot: Successfully classified {processed_count} games safely on the Free Tier!")
 
