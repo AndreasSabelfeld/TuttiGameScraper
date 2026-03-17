@@ -6,6 +6,7 @@ import re
 import random
 import requests
 from playwright.async_api import async_playwright
+from playwright_stealth import Stealth
 from src.db.database import SessionLocal
 from src.db.models import Listing, Game
 
@@ -64,14 +65,14 @@ def get_price_selector(condition: str) -> str:
         return "#used_price .js-price"
 
 
-async def fetch_game_price(browser, game_id: int, search_query: str, condition: str, semaphore: asyncio.Semaphore,
+async def fetch_game_price(context, game_id: int, search_query: str, condition: str, semaphore: asyncio.Semaphore,
                            exchange_rate: float):
     """Worker function (Muted to allow for clean progress bar)."""
 
     await asyncio.sleep(random.uniform(0.1, 2.5))
 
     async with semaphore:
-        page = await browser.new_page()
+        page = await context.new_page()
 
         try:
             encoded_query = urllib.parse.quote(search_query)
@@ -161,7 +162,21 @@ async def run_parallel_pricer():
         affected_listing_ids = set()
 
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
+
+            browser = await p.chromium.launch(
+                headless=True,
+                args=["--disable-blink-features=AutomationControlled"]
+            )
+
+            context = await browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                viewport={"width": 1920, "height": 1080},
+                locale="en-US",
+                timezone_id="Europe/Zurich"
+            )
+
+            await Stealth().apply_stealth_async(context)
+
             tasks = []
 
             for game in games_to_price:
@@ -169,7 +184,7 @@ async def run_parallel_pricer():
                 query = format_search_query(game.detected_name, game.platform)
 
                 # Passing the condition to the worker
-                tasks.append(fetch_game_price(browser, game.id, query, game.condition, semaphore, usd_to_chf_rate))
+                tasks.append(fetch_game_price(context, game.id, query, game.condition, semaphore, usd_to_chf_rate))
 
             print(f"Bot: Dispatching {total_games} searches to PriceCharting...")
 
