@@ -213,6 +213,7 @@ async def analyze_game_free_tier() -> None:
     available_keys = [
         os.environ.get("GEMINI_API_KEY"),
         os.environ.get("GEMINI_API_KEY_2"),
+        os.environ.get("GEMINI_API_KEY_3")
     ]
     # Filter out any empty/None keys if you only have 2
     available_keys = [k for k in available_keys if k]

@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="Fixed a bug with error handling">
+    <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="Added a second API key, s.t. we can move on once the first is depleted.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/vision/gemini_classifier.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/vision/gemini_classifier.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -218,7 +217,15 @@
       <option name="project" value="LOCAL" />
       <updated>1773776593577</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="Added a second API key, s.t. we can move on once the first is depleted.">
+      <option name="closed" value="true" />
+      <created>1773857761026</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1773857761026</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -247,6 +254,7 @@
     <MESSAGE value="Added stealth to bypass Cloudflare" />
     <MESSAGE value="Updated requirements" />
     <MESSAGE value="Fixed a bug with error handling" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fixed a bug with error handling" />
+    <MESSAGE value="Added a second API key, s.t. we can move on once the first is depleted." />
+    <option name="LAST_COMMIT_MESSAGE" value="Added a second API key, s.t. we can move on once the first is depleted." />
   </component>
 </project>
