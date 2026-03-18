@@ -4,9 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="Added stealth to bypass Cloudflare">
+    <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="Fixed a bug with error handling">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vision/gemini_classifier.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/vision/gemini_classifier.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -201,7 +202,23 @@
       <option name="project" value="LOCAL" />
       <updated>1773745566790</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="Updated requirements">
+      <option name="closed" value="true" />
+      <created>1773746052619</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1773746052619</updated>
+    </task>
+    <task id="LOCAL-00014" summary="Fixed a bug with error handling">
+      <option name="closed" value="true" />
+      <created>1773776593577</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1773776593577</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -228,6 +245,8 @@
     <MESSAGE value="Added a timeout to the gemini API requests" />
     <MESSAGE value="Added a sleep after hitting the rate limit" />
     <MESSAGE value="Added stealth to bypass Cloudflare" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added stealth to bypass Cloudflare" />
+    <MESSAGE value="Updated requirements" />
+    <MESSAGE value="Fixed a bug with error handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fixed a bug with error handling" />
   </component>
 </project>

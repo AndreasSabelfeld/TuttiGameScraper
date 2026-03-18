@@ -13,3 +13,4 @@ sqlalchemy
 google-genai
 playwright
 playwright-stealth
+aiohttp

@@ -1,6 +1,8 @@
 import os
 import json
 import asyncio
+
+import aiohttp
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -202,10 +204,23 @@ async def analyze_game_parallel() -> None:
 
 async def analyze_game_free_tier() -> None:
     """
-    Sequential analyzing with strict delays for the Free API Tier (max 15 RPM).
+    Sequential analyzing with strict delays and automatic API Key rotation.
     """
-    print(f"Bot: Starting Gemini Vision for Games (Free Tier Mode - 15 RPM Limit)...")
+    print(f"Bot: Starting Gemini Vision for Games (Free Tier Mode - Key Rotation Enabled)...")
     db = SessionLocal()
+
+    # 1. Setup API Key Rotation
+    available_keys = [
+        os.environ.get("GEMINI_API_KEY"),
+        os.environ.get("GEMINI_API_KEY_2"),
+    ]
+    # Filter out any empty/None keys if you only have 2
+    available_keys = [k for k in available_keys if k]
+
+    current_key_idx = 0
+    active_client = genai.Client(api_key=available_keys[current_key_idx])
+
+    consecutive_429_count = 0
 
     try:
         games_to_identify = db.query(Game).filter(
@@ -216,13 +231,13 @@ async def analyze_game_free_tier() -> None:
             print("Bot: No games to identify.")
             return
 
-        print(f"Bot: Found {len(games_to_identify)} games. Processing at ~4.2 seconds per game to avoid bans...\n")
+        print(f"Bot: Found {len(games_to_identify)} games. Loaded {len(available_keys)} API keys.\n")
 
         processed_count = 0
 
         for i, game in enumerate(games_to_identify):
             if not os.path.exists(game.cropped_image_path):
-                print(f"  -> [Game {game.id}] Image missing at {game.cropped_image_path}. Skipping.")
+                print(f"  -> [Game {game.id}] Image missing. Skipping.")
                 game.detected_name = "Error"
                 db.commit()
                 continue
@@ -234,20 +249,21 @@ async def analyze_game_free_tier() -> None:
                 image_part = types.Part.from_bytes(data=image_data, mime_type="image/jpeg")
 
                 try:
-                    # We give Gemini exactly 30 seconds to answer, otherwise we kill the request.
+                    # 2. Use the 'active_client' instead of the global 'client'
                     response = await asyncio.wait_for(
-                        client.aio.models.generate_content(
+                        active_client.aio.models.generate_content(
                             model=MODEL_ID,
                             contents=[PROMPT, image_part],
                             config=types.GenerateContentConfig(response_mime_type="application/json")
                         ),
-                        timeout=10.0
+                        timeout=30.0
                     )
                 except asyncio.TimeoutError:
                     print(f"  -> Timeout Error on Game {game.id}: Gemini took longer than 30s.")
-                    game.detected_name = "Error"  # Mark as error so it moves on
+                    game.detected_name = "Error"
                     db.commit()
-                    continue  # Skip to the next game
+                    consecutive_429_count = 0  # Reset counter on non-429 error
+                    continue
 
                 if response.text:
                     result_data = json.loads(response.text)
@@ -268,27 +284,53 @@ async def analyze_game_free_tier() -> None:
 
                     print(f"  -> [{i + 1}/{len(games_to_identify)}] Identified: {name} | {plat} | {cond.upper()}")
                     processed_count += 1
+
+                    # 3. Reset the 429 counter upon a successful API call
+                    consecutive_429_count = 0
                 else:
-                    print(f"  -> [{i + 1}/{len(games_to_identify)}] AI returned empty text (possibly safety filter).")
+                    print(f"  -> [{i + 1}/{len(games_to_identify)}] AI returned empty text.")
                     game.detected_name = "Safety Blocked"
+                    consecutive_429_count = 0
 
                 db.commit()
 
             except Exception as e:
-                print(f"  -> Error on Game {game.id}: {str(e)[:100]}")
-                if "429" in str(e):
-                    print(f"  !! Rate limit hit. Backing off for 20s...")
-                    await asyncio.sleep(20)
+                error_msg = str(e)
+
+                # 4. Check for Rate Limit Error
+                if "429" in error_msg:
+                    consecutive_429_count += 1
+                    print(f"  !! Rate limit hit (429). Strike {consecutive_429_count}/3.")
+
+                    if consecutive_429_count >= 3:
+                        if len(available_keys) > 1:
+                            # Move to the next key, loop back to start if at the end of the list
+                            current_key_idx = (current_key_idx + 1) % len(available_keys)
+                            print(f" 3 Strikes! Switching to API Key #{current_key_idx + 1}...")
+
+                            # Initialize a fresh client with the new key
+                            active_client = genai.Client(api_key=available_keys[current_key_idx])
+
+                            # Reset the strike counter so the new key gets a fair chance
+                            consecutive_429_count = 0
+                        else:
+                            print("  No backup keys available! Taking a 60s nap...")
+                            await asyncio.sleep(60)
+                    else:
+                        print("  !! Backing off for 20s...")
+                        await asyncio.sleep(20)
+                else:
+                    print(f"  -> Unexpected Error on Game {game.id}: {error_msg[:100]}")
+                    consecutive_429_count = 0
 
                 game.detected_name = "Error"
                 db.commit()
 
-            # 🚨 CRITICAL FREE TIER THROTTLE 🚨
             # 60 seconds / 15 requests = 4 seconds. We use 4.5 to safely dodge micro-timing bans.
             if i < len(games_to_identify) - 1:
                 await asyncio.sleep(4.5)
 
-        print(f"\nBot: Successfully classified {processed_count} games safely on the Free Tier!")
+        print(f"\nBot: Successfully classified {processed_count} games!")
 
     finally:
         db.close()
