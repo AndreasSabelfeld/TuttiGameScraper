@@ -4,10 +4,10 @@ import numpy as np
 from dotenv import load_dotenv
 from inference import get_model
 from src.db.database import SessionLocal
-from src.db.models import Listing, Card
+from src.db.models import Listing, Game  # Swapped to Game
 
 RAW_DIR = "data/raw/listings"
-CROP_DIR = "data/processed/cropped_cards"
+CROP_DIR = "data/processed/cropped_games"  # Pointing to the games folder
 
 
 def order_points(pts):
@@ -22,7 +22,7 @@ def order_points(pts):
     return rect
 
 
-def warp_card(image, points):
+def warp_game(image, points):
     """Takes an angled set of 4 points and warps it into a flat rectangle."""
     rect = order_points(np.array(points, dtype="float32"))
     (tl, tr, br, bl) = rect
@@ -46,7 +46,7 @@ def warp_card(image, points):
 
 
 def run_vision_pipeline():
-    print("Bot: Initializing High-Fidelity OBB Vision Pipeline...")
+    print("Bot: Initializing Custom YOLOv11 Instance Segmentation Pipeline for Games...")
     load_dotenv()
 
     api_key = os.environ.get("ROBOFLOW_API_KEY")
@@ -55,10 +55,12 @@ def run_vision_pipeline():
         return
 
     os.environ["ROBOFLOW_API_KEY"] = api_key
-    model = get_model(model_id="sleeved-obb/7")
+    model = get_model(model_id="video-game-cases-n3l3e/3")
 
     os.makedirs(CROP_DIR, exist_ok=True)
     db = SessionLocal()
+
+    total_count = 0
 
     try:
         listings = db.query(Listing).filter(Listing.status == "IMAGES_DOWNLOADED").all()
@@ -84,12 +86,12 @@ def run_vision_pipeline():
                 print(f"  -> Could not read image at {img_path}. Skipping.")
                 continue
 
-            # Run the Roboflow Model with optimized parameters
+            # Run your custom trained model!
             results = model.infer(
                 img,
-                confidence=0.40,        # Ignore anything under XX% confidence immediately
-                iou_threshold=0.60,     # Allow cards to overlap by up to 60% before deleting one
-                max_detections=200      # Allow up to 500 cards per photo!
+                confidence=0.40,
+                iou_threshold=0.60,
+                max_detections=200
             )
 
             if isinstance(results, list):
@@ -97,51 +99,53 @@ def run_vision_pipeline():
             else:
                 predictions = results.predictions
 
-            print(f"  -> AI found {len(predictions)} potential objects.")
+            print(f"  -> AI found {len(predictions)} potential games.")
 
-            card_count = 0
+            game_count = 0
             listing_crop_dir = os.path.join(CROP_DIR, str(listing.tutti_id))
 
             if len(predictions) > 0:
                 os.makedirs(listing_crop_dir, exist_ok=True)
 
             for i, pred in enumerate(predictions):
-                # Filter out low confidence junk (adjust if needed!)
+                # Filter out low confidence detections
                 confidence = getattr(pred, 'confidence', 0)
                 if confidence < 0.40:
                     continue
 
-                # Extract points and format for OpenCV
+                # Extract the polygon mask points returned by your segmentation model
                 points_data = getattr(pred, 'points', [])
                 pts = [[p.x, p.y] for p in points_data]
 
+                # Convert the jagged polygon mask into a clean, flat bounding box
                 if len(pts) >= 4:
                     contour = np.array(pts, dtype=np.int32)
                     rect = cv2.minAreaRect(contour)
                     box = cv2.boxPoints(rect)
 
-                    # Warp into a flat card
-                    flat_card = warp_card(img, box)
+                    # Warp into a flat game box
+                    flat_game = warp_game(img, box)
 
-                    if flat_card.size == 0:
+                    if flat_game.size == 0:
                         continue
 
-                    crop_filename = f"card_{i}.jpg"
+                    crop_filename = f"game_{i}.jpg"
                     crop_filepath = os.path.join(listing_crop_dir, crop_filename)
-                    cv2.imwrite(crop_filepath, flat_card)
+                    cv2.imwrite(crop_filepath, flat_game)
 
-                    new_card = Card(
+                    new_game = Game(
                         listing_id=listing.id,
                         cropped_image_path=crop_filepath,
                     )
-                    db.add(new_card)
-                    card_count += 1
+                    db.add(new_game)
+                    game_count += 1
 
             listing.status = "PROCESSED_VISION"
-            print(f"  -> Successfully cropped, flattened, and saved {card_count} objects to DB.")
+            print(f"  -> Successfully cropped, flattened, and saved {game_count} games to DB.")
+            total_count += game_count
 
         db.commit()
-        print("\nBot: Vision pipeline finished successfully.")
+        print(f"\nBot: Vision pipeline finished successfully.\nAdded {total_count} new games to DB.")
 
     except Exception as e:
         print(f"Error in vision pipeline: {e}")

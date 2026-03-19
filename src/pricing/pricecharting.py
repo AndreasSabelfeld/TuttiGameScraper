@@ -245,3 +245,28 @@ async def run_parallel_pricer():
         db.rollback()
     finally:
         db.close()
+
+
+async def background_pricing_task(context, game_data, semaphore, exchange_rate):
+    """Background task that runs while Gemini is sleeping."""
+    query = format_search_query(game_data["name"], game_data["platform"])
+
+    # We call your existing fetch_game_price function
+    game_id, price_val_chf, pc_url, img_url, status = await fetch_game_price(
+        context, game_data["game_id"], query, game_data["condition"], semaphore, exchange_rate
+    )
+
+    # Open a fast, independent DB session to save the result
+    db = SessionLocal()
+    try:
+        db_game = db.query(Game).filter(Game.id == game_id).first()
+        if db_game:
+            db_game.estimated_price = price_val_chf
+            db_game.pricecharting_url = pc_url
+            db_game.pricecharting_image_url = img_url
+            db.commit()
+
+            status_text = f"[{price_val_chf} CHF]" if status == "FOUND" else f"[{status}]"
+            print(f" [Pricer] Finished Game {game_id}: {status_text}")
+    finally:
+        db.close()

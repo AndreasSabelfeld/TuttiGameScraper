@@ -5,6 +5,7 @@ import ssl
 
 from dotenv import load_dotenv
 
+from src.pricing.pipeline import run_smart_pipeline
 from src.scraper.tutti import run_hybrid_scraper
 from src.scraper.image_downloader import run_downloader
 from src.vision.detector import run_vision_pipeline
@@ -12,10 +13,6 @@ from src.vision.gemini_classifier import analyze_game_sequential, analyze_game_p
 from src.pricing.pricecharting import run_parallel_pricer
 from src.pricing.calculator import calculate_arbitrage
 from src.notifications.reporter import generate_and_send_report
-
-
-def analyze_card_free_tier():
-    pass
 
 
 def main():
@@ -30,24 +27,32 @@ def main():
 
     try:
         print("\n>>> PHASE 1: SCRAPING & DOWNLOADING <<<")
-        asyncio.run(run_hybrid_scraper(max_listings=250))
+        asyncio.run(run_hybrid_scraper(max_listings=25))
         asyncio.run(run_downloader())
 
-        print("\n>>> PHASE 2: VISION & AI CLASSIFICATION <<<")
+        print("\n>>> PHASE 2 & 3: VISION AI & MARKET PRICING <<<")
         run_vision_pipeline()
 
         tier = os.environ.get("GEMINI_TIER", "FREE").upper()
+
         if tier == "PAID":
+            # Traditional Sequential Pipeline for Paid Tier
+            print("\nBot: Running Paid Tier Pipeline (Sequential High-Speed)...")
             asyncio.run(analyze_game_parallel())
+            asyncio.run(run_parallel_pricer())
         else:
-            asyncio.run(analyze_game_free_tier())
+            # New Producer-Consumer Pipeline for Free Tier
+            print("\nBot: Running Free Tier Pipeline (Concurrent Smart Mode)...")
 
-        print("\n>>> PHASE 3: PRICECHARTING MARKET ANALYSIS <<<")
+            # Step 1: Backlog Check (Clear out anything that crashed yesterday)
+            print("\nBot: Checking for unpriced backlog...")
+            asyncio.run(run_parallel_pricer())
 
-        asyncio.run(run_parallel_pricer())
+            # Step 2: Run the concurrent Generator/Consumer pipeline for new images
+            asyncio.run(run_smart_pipeline())
+
+        print("\n>>> PHASE 4: ARBITRAGE & REPORTING <<<")
         calculate_arbitrage()  # DB Status Updates
-
-        print("\n>>> PHASE 4: REPORTING & DATABASE CLEANUP <<<")
         generate_and_send_report()
 
     except KeyboardInterrupt:

@@ -4,8 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="Added a second API key, s.t. we can move on once the first is depleted.">
+    <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="Added 3rd API key.">
+      <change afterPath="$PROJECT_DIR$/src/pricing/pipeline.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/pricing/pricecharting.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/pricing/pricecharting.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vision/detector.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/vision/detector.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/vision/gemini_classifier.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/vision/gemini_classifier.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -225,7 +229,15 @@
       <option name="project" value="LOCAL" />
       <updated>1773857761026</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="Added 3rd API key.">
+      <option name="closed" value="true" />
+      <created>1773869508073</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1773869508073</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -255,6 +267,7 @@
     <MESSAGE value="Updated requirements" />
     <MESSAGE value="Fixed a bug with error handling" />
     <MESSAGE value="Added a second API key, s.t. we can move on once the first is depleted." />
-    <option name="LAST_COMMIT_MESSAGE" value="Added a second API key, s.t. we can move on once the first is depleted." />
+    <MESSAGE value="Added 3rd API key." />
+    <option name="LAST_COMMIT_MESSAGE" value="Added 3rd API key." />
   </component>
 </project>

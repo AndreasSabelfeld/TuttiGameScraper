@@ -335,3 +335,111 @@ async def analyze_game_free_tier() -> None:
 
     finally:
         db.close()
+
+
+async def analyze_game_free_tier_generator():
+    """
+    Generates identified games one by one for the pricing engine to consume immediately.
+    """
+    print(f"Bot: Starting Gemini Vision (Producer Mode)...")
+    db = SessionLocal()
+
+    available_keys = [k for k in [os.environ.get("GEMINI_API_KEY"), os.environ.get("GEMINI_API_KEY_2")] if k]
+    current_key_idx = 0
+    active_client = genai.Client(api_key=available_keys[current_key_idx]) if available_keys else None
+    consecutive_429_count = 0
+
+    try:
+        games_to_identify = db.query(Game).filter(
+            (Game.detected_name == None) | (Game.detected_name == "Error")
+        ).all()
+
+        if not games_to_identify:
+            print("Bot: No games need identification.")
+            return
+
+        for i, game in enumerate(games_to_identify):
+            if not os.path.exists(game.cropped_image_path):
+                game.detected_name = "Error"
+                db.commit()
+                continue
+
+            try:
+                with open(game.cropped_image_path, "rb") as f:
+                    image_data = f.read()
+
+                image_part = types.Part.from_bytes(data=image_data, mime_type="image/jpeg")
+
+                response = await asyncio.wait_for(
+                    active_client.aio.models.generate_content(
+                        model=MODEL_ID,
+                        contents=[PROMPT, image_part],
+                        config=types.GenerateContentConfig(response_mime_type="application/json")
+                    ), timeout=30.0
+                )
+
+                if response.text:
+                    result_data = json.loads(response.text)
+                    if isinstance(result_data, list) and len(result_data) > 0:
+                        result_data = result_data[0]
+
+                    name = result_data.get('game_title', 'Unknown')
+                    plat = result_data.get('platform', 'Unknown')
+                    cond = result_data.get('condition', 'loose')
+
+                    game.detected_name = name
+                    game.platform = plat
+                    game.condition = cond
+                    db.commit()
+
+                    print(f"  -> [Vision] Identified: {name} | {plat}")
+
+                    # 🚀 THE MAGIC YIELD 🚀
+                    # We pass the identified data to the background pricer!
+                    if name != "Unknown":
+                        yield {
+                            "game_id": game.id,
+                            "name": name,
+                            "platform": plat,
+                            "condition": cond
+                        }
+
+                consecutive_429_count = 0
+
+            except Exception as e:
+                error_msg = str(e)
+
+                # 4. Check for Rate Limit Error
+                if "429" in error_msg:
+                    consecutive_429_count += 1
+                    print(f"  !! Rate limit hit (429). Strike {consecutive_429_count}/3.")
+
+                    if consecutive_429_count >= 3:
+                        if len(available_keys) > 1:
+                            # Move to the next key, loop back to start if at the end of the list
+                            current_key_idx = (current_key_idx + 1) % len(available_keys)
+                            print(f" 3 Strikes! Switching to API Key #{current_key_idx + 1}...")
+
+                            # Initialize a fresh client with the new key
+                            active_client = genai.Client(api_key=available_keys[current_key_idx])
+
+                            # Reset the strike counter so the new key gets a fair chance
+                            consecutive_429_count = 0
+                        else:
+                            print("  No backup keys available! Taking a 60s nap...")
+                            await asyncio.sleep(60)
+                    else:
+                        print("  !! Backing off for 20s...")
+                        await asyncio.sleep(20)
+                else:
+                    print(f"  -> Unexpected Error on Game {game.id}: {error_msg[:100]}")
+                    consecutive_429_count = 0
+
+                game.detected_name = "Error"
+                db.commit()
+
+            if i < len(games_to_identify) - 1:
+                await asyncio.sleep(4.5)  # Wait for rate limit while Playwright works!
+
+    finally:
+        db.close()
