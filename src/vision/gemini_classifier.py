@@ -69,7 +69,7 @@ def is_banned_tutti_seller(url: str) -> bool:
             seller_name = data.get("offers", {}).get("seller", {}).get("name", "").lower()
 
             if seller_name in banned_sellers:
-                print(f"  🚫 BOUNCER: Intercepted listing from banned seller '{seller_name}'.")
+                print(f"  BOUNCER: Intercepted listing from banned seller '{seller_name}'.")
                 return True
 
     except Exception as e:
@@ -407,7 +407,9 @@ async def analyze_game_free_tier_generator():
     print(f"Bot: Starting Gemini Vision (Producer Mode)...")
     db = SessionLocal()
 
-    available_keys = [k for k in [os.environ.get("GEMINI_API_KEY"), os.environ.get("GEMINI_API_KEY_2")] if k]
+    available_keys = [k for k in [os.environ.get("GEMINI_API_KEY"),
+                                  os.environ.get("GEMINI_API_KEY_2"),
+                                  os.environ.get("GEMINI_API_KEY_3")] if k]
     current_key_idx = 0
     active_client = genai.Client(api_key=available_keys[current_key_idx]) if available_keys else None
     consecutive_429_count = 0

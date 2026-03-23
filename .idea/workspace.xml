@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="Implemented a concurrent pipeline for detection and pricing">
-      <change afterPath="$PROJECT_DIR$/src/db/models_ricardo.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/scraper/ricardo.py" afterDir="false" />
+    <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="Added a banned user list for tutti listings">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/vision/gemini_classifier.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/vision/gemini_classifier.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -252,7 +249,15 @@
       <option name="project" value="LOCAL" />
       <updated>1773941948347</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="Added a banned user list for tutti listings">
+      <option name="closed" value="true" />
+      <created>1774262650057</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1774262650057</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -284,6 +289,7 @@
     <MESSAGE value="Added a second API key, s.t. we can move on once the first is depleted." />
     <MESSAGE value="Added 3rd API key." />
     <MESSAGE value="Implemented a concurrent pipeline for detection and pricing" />
-    <option name="LAST_COMMIT_MESSAGE" value="Implemented a concurrent pipeline for detection and pricing" />
+    <MESSAGE value="Added a banned user list for tutti listings" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added a banned user list for tutti listings" />
   </component>
 </project>
