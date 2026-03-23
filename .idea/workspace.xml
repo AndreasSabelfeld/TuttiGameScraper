@@ -5,7 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="Implemented a concurrent pipeline for detection and pricing">
+      <change afterPath="$PROJECT_DIR$/src/db/models_ricardo.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/scraper/ricardo.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vision/gemini_classifier.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/vision/gemini_classifier.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -240,7 +244,15 @@
       <option name="project" value="LOCAL" />
       <updated>1773941935285</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="Implemented a concurrent pipeline for detection and pricing">
+      <option name="closed" value="true" />
+      <created>1773941948347</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1773941948347</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">

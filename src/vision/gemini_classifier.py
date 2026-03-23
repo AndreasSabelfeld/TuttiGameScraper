@@ -1,8 +1,9 @@
 import os
+import re
+import requests
 import json
 import asyncio
 
-import aiohttp
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -35,6 +36,46 @@ CRITICAL INSTRUCTIONS:
 
 Respond STRICTLY in JSON format: {"game_title": "...", "platform": "...", "condition": "..."}
 """
+
+
+def is_banned_tutti_seller(url: str) -> bool:
+    """
+    Does a lightning-fast invisible check on the Tutti listing page
+    to extract the seller's name from the JSON-LD data.
+    """
+    if "tutti.ch" not in url:
+        return False
+
+    banned_env = os.environ.get("BANNED_TUTTI_SELLERS", "")
+    banned_sellers = [seller.strip().lower() for seller in banned_env.split(",") if seller.strip()]
+
+    if not banned_sellers:
+        return False
+
+    try:
+        # Standard HTTP request (No Playwright needed!)
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"}
+        response = requests.get(url, headers=headers, timeout=5)
+
+        if response.status_code != 200:
+            return False
+
+        # Extract the JSON-LD block using regex
+        match = re.search(r'<script type="application/ld\+json">(.*?)</script>', response.text, re.DOTALL)
+        if match:
+            data = json.loads(match.group(1))
+
+            # Navigate the JSON-LD to find the seller name
+            seller_name = data.get("offers", {}).get("seller", {}).get("name", "").lower()
+
+            if seller_name in banned_sellers:
+                print(f"  🚫 BOUNCER: Intercepted listing from banned seller '{seller_name}'.")
+                return True
+
+    except Exception as e:
+        pass  # If the check fails, assume they are safe so we don't miss good deals
+
+    return False
 
 
 async def analyze_game_sequential() -> None:
@@ -114,8 +155,20 @@ async def analyze_game_sequential() -> None:
         db.close()
 
 
-async def _process_single_card_api(game_id: int, image_path: str):
+async def _process_single_card_api(game_id: int, image_path: str, url: str, banned_cache: dict):
     """Helper function for the parallel pipeline to hit the API."""
+
+    if url:
+        # Check if we already know this seller is banned/safe
+        if url not in banned_cache:
+            # We use to_thread so the HTTP request doesn't freeze the async event loop!
+            banned_cache[url] = await asyncio.to_thread(is_banned_tutti_seller, url)
+
+        # If the seller is banned, return immediately and skip the Gemini API!
+        if banned_cache[url]:
+            # Return exactly what the DB expects so it saves gracefully
+            return game_id, "Banned Seller", "Banned Seller", "loose", None
+
     try:
         with open(image_path, "rb") as f:
             image_data = f.read()
@@ -175,7 +228,17 @@ async def analyze_game_parallel() -> None:
 
             print(f"--- Processing Batch {current_batch_num}/{total_batches} ({len(batch)} games) ---")
 
-            tasks = [_process_single_card_api(game.id, game.cropped_image_path) for game in batch]
+            shared_banned_cache = {}
+
+            tasks = [
+                _process_single_card_api(
+                    game.id,
+                    game.cropped_image_path,
+                    game.listing.url,  # <--- Pass the parent URL
+                    shared_banned_cache  # <--- Pass the shared memory cache
+                )
+                for game in batch
+            ]
             results = await asyncio.gather(*tasks)
 
             for game_id, name, plat, cond, error in results:
@@ -358,11 +421,26 @@ async def analyze_game_free_tier_generator():
             print("Bot: No games need identification.")
             return
 
+        banned_url_cache = {}
+
         for i, game in enumerate(games_to_identify):
             if not os.path.exists(game.cropped_image_path):
                 game.detected_name = "Error"
                 db.commit()
                 continue
+
+            parent_url = game.listing.url
+
+            if parent_url not in banned_url_cache:
+                banned_url_cache[parent_url] = await asyncio.to_thread(is_banned_tutti_seller, parent_url)
+
+            is_banned = banned_url_cache[parent_url]
+
+            if is_banned:
+                print(f"  -> [Game {game.id}] Banned seller detected. Skipping AI Vision.")
+                game.detected_name = "Banned Seller"
+                db.commit()
+                continue  # Skip the Gemini Vision call completely!
 
             try:
                 with open(game.cropped_image_path, "rb") as f:
@@ -394,8 +472,6 @@ async def analyze_game_free_tier_generator():
 
                     print(f"  -> [Vision] Identified: {name} | {plat}")
 
-                    # 🚀 THE MAGIC YIELD 🚀
-                    # We pass the identified data to the background pricer!
                     if name != "Unknown":
                         yield {
                             "game_id": game.id,

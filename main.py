@@ -6,7 +6,8 @@ import ssl
 from dotenv import load_dotenv
 
 from src.pricing.pipeline import run_smart_pipeline
-from src.scraper.tutti import run_hybrid_scraper
+import src.scraper.tutti as tutti
+import src.scraper.ricardo as ricardo
 from src.scraper.image_downloader import run_downloader
 from src.vision.detector import run_vision_pipeline
 from src.vision.gemini_classifier import analyze_game_sequential, analyze_game_parallel, analyze_game_free_tier
@@ -27,7 +28,7 @@ def main():
 
     try:
         print("\n>>> PHASE 1: SCRAPING & DOWNLOADING <<<")
-        asyncio.run(run_hybrid_scraper(max_listings=250))
+        asyncio.run(tutti.run_hybrid_scraper(max_listings=250))
         asyncio.run(run_downloader())
 
         print("\n>>> PHASE 2 & 3: VISION AI & MARKET PRICING <<<")
