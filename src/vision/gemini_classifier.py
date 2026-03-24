@@ -512,6 +512,7 @@ async def analyze_game_free_tier_generator():
                         if len(available_keys) > 1:
                             # Move to the next key, loop back to start if at the end of the list
                             current_key_idx = (current_key_idx + 1) % len(available_keys)
+                            save_key_idx(current_key_idx)
                             print(f" 3 Strikes! Switching to API Key #{current_key_idx + 1}...")
 
                             # Initialize a fresh client with the new key
