@@ -14,6 +14,7 @@ load_dotenv()
 API_KEY = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=API_KEY)
 MODEL_ID = "gemini-3.1-flash-lite-preview"
+STATE_FILE = ".api_key_state"
 
 BATCH_SIZE = 100  # For parallel mode
 
@@ -36,6 +37,22 @@ CRITICAL INSTRUCTIONS:
 
 Respond STRICTLY in JSON format: {"game_title": "...", "platform": "...", "condition": "..."}
 """
+
+
+def get_saved_key_idx() -> int:
+    """Reads the last used API key index from a file."""
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r") as f:
+                return int(f.read().strip())
+        except ValueError:
+            return 0
+    return 0
+
+def save_key_idx(idx: int) -> None:
+    """Saves the current API key index to a file."""
+    with open(STATE_FILE, "w") as f:
+        f.write(str(idx))
 
 
 def is_banned_tutti_seller(url: str) -> bool:
@@ -281,7 +298,7 @@ async def analyze_game_free_tier() -> None:
     # Filter out any empty/None keys if you only have 2
     available_keys = [k for k in available_keys if k]
 
-    current_key_idx = 0
+    current_key_idx = get_saved_key_idx() % len(available_keys)
     active_client = genai.Client(api_key=available_keys[current_key_idx])
 
     consecutive_429_count = 0
@@ -409,7 +426,7 @@ async def analyze_game_free_tier_generator():
     available_keys = [k for k in [os.environ.get("GEMINI_API_KEY"),
                                   os.environ.get("GEMINI_API_KEY_2"),
                                   os.environ.get("GEMINI_API_KEY_3")] if k]
-    current_key_idx = 0
+    current_key_idx = get_saved_key_idx() % len(available_keys)
     active_client = genai.Client(api_key=available_keys[current_key_idx]) if available_keys else None
     consecutive_429_count = 0
 
