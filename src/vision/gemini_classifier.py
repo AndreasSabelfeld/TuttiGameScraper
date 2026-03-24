@@ -378,8 +378,7 @@ async def analyze_game_free_tier() -> None:
                             # Reset the strike counter so the new key gets a fair chance
                             consecutive_429_count = 0
                         else:
-                            print("  No backup keys available! Taking a 60s nap...")
-                            await asyncio.sleep(60)
+                            raise RuntimeError("FATAL: API limits exhausted and no backup keys available. Stopping pipeline.")
                     else:
                         print("  !! Backing off for 20s...")
                         await asyncio.sleep(20)
@@ -487,8 +486,8 @@ async def analyze_game_free_tier_generator():
             except Exception as e:
                 error_msg = str(e)
 
-                # 4. Check for Rate Limit Error
-                if "429" in error_msg:
+                # Check for Rate Limit AND Server Overload (503/500)
+                if "429" in error_msg or "503" in error_msg:
                     consecutive_429_count += 1
                     print(f"  !! Rate limit hit (429). Strike {consecutive_429_count}/3.")
 
@@ -504,8 +503,7 @@ async def analyze_game_free_tier_generator():
                             # Reset the strike counter so the new key gets a fair chance
                             consecutive_429_count = 0
                         else:
-                            print("  No backup keys available! Taking a 60s nap...")
-                            await asyncio.sleep(60)
+                            raise RuntimeError("FATAL: API limits exhausted and no backup keys available. Stopping pipeline.")
                     else:
                         print("  !! Backing off for 20s...")
                         await asyncio.sleep(20)
