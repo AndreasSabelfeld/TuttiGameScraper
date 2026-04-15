@@ -506,8 +506,13 @@ async def analyze_game_free_tier_generator():
 
                 # Check for Rate Limit AND Server Overload (503/500)
                 if "429" in error_msg or "503" in error_msg:
-                    consecutive_429_count += 1
-                    print(f"  !! Rate limit hit (429). Strike {consecutive_429_count}/3.")
+                    code = 429 if "429" in error_msg else 503
+                    if code == 429:
+                        print(f"  !! Rate limit hit ({code}). Strike {consecutive_429_count}/3.")
+                        consecutive_429_count += 1
+                    else:
+                        print(f"  !! Server overload ({code}).")
+                        raise Exception(error_msg)
 
                     if consecutive_429_count >= 3:
                         if len(available_keys) > 1:
