@@ -512,7 +512,7 @@ async def analyze_game_free_tier_generator():
                         consecutive_429_count += 1
                     else:
                         print(f"  !! Server overload ({code}).")
-                        raise Exception(error_msg)
+                        raise RuntimeError("FATAL: Server Overload")
 
                     if consecutive_429_count >= 3:
                         if len(available_keys) > 1:

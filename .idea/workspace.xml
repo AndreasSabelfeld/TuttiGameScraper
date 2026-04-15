@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="We now memorize at which API key we're at">
+    <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="Changes so that we differentiate between rate limit errors and server overloads">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vision/gemini_classifier.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/vision/gemini_classifier.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -298,7 +296,23 @@
       <option name="project" value="LOCAL" />
       <updated>1774383626472</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="Changes so that we differentiate between rate limit errors and server overloads">
+      <option name="closed" value="true" />
+      <created>1776247996127</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1776247996127</updated>
+    </task>
+    <task id="LOCAL-00026" summary="Changes so that we differentiate between rate limit errors and server overloads">
+      <option name="closed" value="true" />
+      <created>1776248171971</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1776248171971</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -334,6 +348,7 @@
     <MESSAGE value="Hotfix for API keys" />
     <MESSAGE value="Added Exception when out of API keys and we now also detect Server Overload Error (503)" />
     <MESSAGE value="We now memorize at which API key we're at" />
-    <option name="LAST_COMMIT_MESSAGE" value="We now memorize at which API key we're at" />
+    <MESSAGE value="Changes so that we differentiate between rate limit errors and server overloads" />
+    <option name="LAST_COMMIT_MESSAGE" value="Changes so that we differentiate between rate limit errors and server overloads" />
   </component>
 </project>
