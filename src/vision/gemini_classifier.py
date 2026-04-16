@@ -11,7 +11,11 @@ from src.db.database import SessionLocal
 from src.db.models import Game
 
 load_dotenv()
-API_KEY = os.environ.get("GEMINI_API_KEY")
+tier = os.environ.get("GEMINI_TIER", "FREE").upper()
+if tier == "PAID":
+    API_KEY = os.environ.get("PAID_GEMINI_API_KEY")
+else:
+    API_KEY = os.environ.get("GEMINI_API_KEY")
 client = genai.Client(api_key=API_KEY)
 MODEL_ID = "gemini-3.1-flash-lite-preview"
 STATE_FILE = ".api_key_state"
