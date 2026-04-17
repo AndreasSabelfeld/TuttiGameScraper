@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="fixed the issue.">
+    <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="Added an extra paid API Key to env">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/vision/gemini_classifier.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/vision/gemini_classifier.py" afterDir="false" />
     </list>
@@ -337,7 +337,15 @@
       <option name="project" value="LOCAL" />
       <updated>1776368641460</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="Added an extra paid API Key to env">
+      <option name="closed" value="true" />
+      <created>1776368864476</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1776368864476</updated>
+    </task>
+    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -376,6 +384,7 @@
     <MESSAGE value="Changes so that we differentiate between rate limit errors and server overloads" />
     <MESSAGE value="stop while working on bugfix" />
     <MESSAGE value="fixed the issue." />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed the issue." />
+    <MESSAGE value="Added an extra paid API Key to env" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added an extra paid API Key to env" />
   </component>
 </project>

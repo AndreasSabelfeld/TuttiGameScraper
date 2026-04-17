@@ -434,6 +434,7 @@ async def analyze_game_free_tier_generator():
     current_key_idx = get_saved_key_idx() % len(available_keys)
     active_client = genai.Client(api_key=available_keys[current_key_idx]) if available_keys else None
     consecutive_429_count = 0
+    consecutive_503_count = 0
 
     try:
         games_to_identify = db.query(Game).filter(
@@ -504,6 +505,7 @@ async def analyze_game_free_tier_generator():
                         }
 
                 consecutive_429_count = 0
+                consecutive_503_count = 0
 
             except Exception as e:
                 error_msg = str(e)
@@ -516,7 +518,9 @@ async def analyze_game_free_tier_generator():
                         consecutive_429_count += 1
                     else:
                         print(f"  !! Server overload ({code}).")
-                        raise RuntimeError("FATAL: Server Overload")
+                        consecutive_503_count += 1
+                        if consecutive_503_count >= 10:
+                            raise RuntimeError("FATAL: Server Overload")
 
                     if consecutive_429_count >= 3:
                         if len(available_keys) > 1:
