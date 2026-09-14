@@ -7,7 +7,7 @@ from src.db.models import Base
 
 os.makedirs("data/processed", exist_ok=True)
 
-DATABASE_URL = "sqlite:///data/processed/pokemon_db.sqlite"
+DATABASE_URL = "sqlite:///data/processed/game_db.sqlite"
 
 engine = create_engine(DATABASE_URL, echo=False)                            # set echo to True for debugging
 

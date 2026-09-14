@@ -6,7 +6,13 @@
   <component name="ChangeListManager">
     <list default="true" id="cf668293-96e5-4bf1-aa13-ac0afab39727" name="Changes" comment="Added an extra paid API Key to env">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/vision/gemini_classifier.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/vision/gemini_classifier.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/processed/game_db.sqlite" beforeDir="false" afterPath="$PROJECT_DIR$/data/processed/game_db.sqlite" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/db/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/database.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/db/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/notifications/reporter.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/notifications/reporter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/pricing/calculator.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/pricing/calculator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/scraper/tutti.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/scraper/tutti.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/vision/classifier.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

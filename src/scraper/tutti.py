@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import re
+import shutil
 from playwright.async_api import async_playwright
 from src.db.database import SessionLocal, init_db
 from src.db.models import Listing
@@ -19,12 +20,12 @@ def parse_price(price_str: str) -> float:
 
 async def run_hybrid_scraper(max_listings: int = None) -> None:
     """
-    Scrapes Tutti for Pokémon listings and saved them to the database.
+    Scrapes Tutti for Video Game listings and saves them to the database.
     :param max_listings: specifies the maximum number of listings to scrape. Defaults to all listings possible.
     :return: None
     """
 
-    print(f"Bot: Starting scraper. Target: {'ALL listings' if max_listings is None else f'{max_listings} listings'}")
+    print(f"Bot: Starting Game Scraper. Target: {'ALL listings' if max_listings is None else f'{max_listings} listings'}")
     init_db()
     db = SessionLocal()
 
@@ -41,7 +42,7 @@ async def run_hybrid_scraper(max_listings: int = None) -> None:
             while has_more_pages:
                 print(f"Bot: Loading Page {page_num}...")
 
-                url = f"https://www.tutti.ch/de/q/suche/Ak65wb2tlbW9uIGthcnRlbsCUwMDAwA?sorting=newest&page={page_num}&query=pokemon+karten"
+                url = f"https://www.tutti.ch/de/q/spielkonsolen-und-games/Ak6VTcGllbK1jb25zb2xlc0dhbWVzlMDAwMA?sorting=newest&page={page_num}&query=Spiel"
 
                 await page.goto(url)
                 await page.wait_for_load_state("domcontentloaded")
@@ -112,7 +113,7 @@ async def run_hybrid_scraper(max_listings: int = None) -> None:
                         )
                         db.add(new_listing)
                         new_listings_count += 1
-                        print(f"  + New: {title[:30]}... | CHF {asking_price}")
+                        print(f"  + New Game Listing: {title[:30]}... | CHF {asking_price}")
 
                 db.commit()
                 page_num += 1
@@ -140,20 +141,15 @@ def __deletion(db, scraped_ids: set) -> None:
     """
     Deletes the listings from the database and corresponding images if they weren't scraped a second time,
     since that implies they have been deleted.
-    :param db: database session
-    :param scraped_ids: scraped ids
-    :return: None
     """
     print("\nBot: Performing Database Sync & Cleanup...")
-    # Get all listings currently in our DB
     all_db_listings = db.query(Listing).all()
     deleted_count = 0
 
-    # The directory where our downloader saves the images
     image_dir = "data/raw/listings"
+    crop_dir = "data/processed/cropped_games"
 
     for db_listing in all_db_listings:
-        # If a DB listing was not found in our current scrape, it was removed from Tutti
         if db_listing.tutti_id not in scraped_ids:
             print(f"  - Deleting obsolete listing: {db_listing.title[:30]}...")
 
@@ -161,9 +157,17 @@ def __deletion(db, scraped_ids: set) -> None:
             if os.path.exists(image_path):
                 try:
                     os.remove(image_path)
-                    print(f"    -> Deleted associated image: {db_listing.tutti_id}.jpg")
+                    print(f"    -> Deleted associated raw image: {db_listing.tutti_id}.jpg")
                 except OSError as e:
                     print(f"    -> Error deleting image file {image_path}: {e}")
+
+            listing_crop_dir = os.path.join(crop_dir, str(db_listing.tutti_id))
+            if os.path.exists(listing_crop_dir):
+                try:
+                    shutil.rmtree(listing_crop_dir)
+                    print(f"    -> Deleted cropped games folder: {listing_crop_dir}")
+                except OSError as e:
+                    print(f"    -> Error deleting crop directory {listing_crop_dir}: {e}")
 
             db.delete(db_listing)
             deleted_count += 1

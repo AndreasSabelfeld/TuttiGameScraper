@@ -1,5 +1,5 @@
 from src.db.database import SessionLocal
-from src.db.models import Listing, Card
+from src.db.models import Listing, Game
 
 
 def calculate_arbitrage():
@@ -18,12 +18,13 @@ def calculate_arbitrage():
             total_value = 0.0
 
             # Sum up the value of all cards attached to this listing
-            for card in listing.cards:
-                if card.estimated_price:
-                    total_value += card.estimated_price
+            for game in listing.games:
+                if game.estimated_price:
+                    total_value += game.estimated_price
 
             # Save the total to the database
             listing.total_estimated_value = round(total_value, 2)
+            listing.status = "PRICED"
 
         db.commit()
         print(f"Bot: Calculation complete!")

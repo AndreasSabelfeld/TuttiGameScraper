@@ -7,7 +7,7 @@ from email.mime.image import MIMEImage
 from dotenv import load_dotenv
 from PIL import Image
 from src.db.database import SessionLocal
-from src.db.models import Listing, Card
+from src.db.models import Listing, Game
 
 
 def generate_and_send_report():
@@ -45,13 +45,12 @@ def generate_and_send_report():
             return
 
         # SORTING: Highest profit at the top of the email!
-        # x[2] refers to the 'profit' variable in the tuple we just appended above
         profitable_listings.sort(key=lambda x: x[2], reverse=True)
 
         print(f"Bot: Found {len(profitable_listings)} profitable listings. Formatting email...")
 
         msg = MIMEMultipart('related')
-        msg['Subject'] = f"🚨 Pokemon Arbitrage Alert: {len(profitable_listings)} Profitable Listings Found!"
+        msg['Subject'] = f"🚨 Video Game Arbitrage Alert: {len(profitable_listings)} Profitable Listings Found!"
         msg['From'] = sender_email
         msg['To'] = receiver_email
 
@@ -65,7 +64,7 @@ def generate_and_send_report():
               table { width: 100%; border-collapse: collapse; margin-top: 15px; background-color: white; }
               th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
               th { background-color: #f2f2f2; }
-              .card-img { max-width: 150px; max-height: 200px; border-radius: 5px; }
+              .game-img { max-width: 150px; max-height: 200px; border-radius: 5px; }
               details { margin-top: 15px; }
               summary {
                 background-color: #007bff; color: white; padding: 12px; border-radius: 5px;
@@ -76,7 +75,7 @@ def generate_and_send_report():
             </style>
           </head>
           <body>
-            <h2>Your Daily Pokemon TCG Arbitrage Report</h2>
+            <h2>Your Daily Video Game Arbitrage Report</h2>
         """
 
         embedded_images = []
@@ -98,35 +97,38 @@ def generate_and_send_report():
                     <tr>
                         <th>Tutti Crop</th>
                         <th>PriceCharting Ref</th>
-                        <th>Card Details</th>
+                        <th>Game Details</th>
                     </tr>
             """
 
-            for card in listing.cards:
-                if not card.estimated_price or card.estimated_price == 0:
+            # Iterate through games instead of cards
+            for game in listing.games:
+                if not game.estimated_price or game.estimated_price == 0:
                     continue
 
-                cid = f"image_{card.id}"
+                cid = f"image_{game.id}"
 
                 local_img_html = "<i>Image Missing</i>"
-                if os.path.exists(card.cropped_image_path):
-                    local_img_html = f'<img src="cid:{cid}" class="card-img" alt="Cropped Card">'
-                    embedded_images.append((cid, card.cropped_image_path))
+                if os.path.exists(game.cropped_image_path):
+                    local_img_html = f'<img src="cid:{cid}" class="game-img" alt="Cropped Game">'
+                    embedded_images.append((cid, game.cropped_image_path))
 
                 pc_img_html = "<i>No Ref Image</i>"
-                if card.pricecharting_image_url:
-                    pc_img_html = f'<img src="{card.pricecharting_image_url}" class="card-img" alt="Reference Card">'
+                if game.pricecharting_image_url:
+                    pc_img_html = f'<img src="{game.pricecharting_image_url}" class="game-img" alt="Reference Game">'
 
-                pc_link = card.pricecharting_url if card.pricecharting_url else "#"
+                pc_link = game.pricecharting_url if game.pricecharting_url else "#"
 
+                # Updated to show Platform and Condition
                 html_content += f"""
                         <tr>
                             <td>{local_img_html}</td>
                             <td>{pc_img_html}</td>
                             <td style="text-align: left;">
-                                <strong>{card.detected_name}</strong><br>
-                                Set: {card.set_info}<br>
-                                Value: <strong>CHF {card.estimated_price:.2f}</strong><br>
+                                <strong>{game.detected_name}</strong><br>
+                                Platform: {game.platform}<br>
+                                Condition: {game.condition.capitalize()}<br>
+                                Value: <strong>CHF {game.estimated_price:.2f}</strong><br>
                                 <a href="{pc_link}" target="_blank">View on PriceCharting</a>
                             </td>
                         </tr>
@@ -176,7 +178,7 @@ def generate_and_send_report():
             listing.status = "REPORTED"
 
         db.commit()
-        print("Bot: ✅ Database fully synced. Pipeline complete!")
+        print("Bot: Database fully synced. Pipeline complete!")
 
     except Exception as e:
         print(f"Fatal error in email reporter: {e}")
